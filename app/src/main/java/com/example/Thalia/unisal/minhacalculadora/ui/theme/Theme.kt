@@ -11,19 +11,68 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-
+enum class TemaDoAPP {
+    CLARO,
+    ESCURO,
+    DINAMICO
+}
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
-    error = PurpleError,
-    onError = white100
+    primary = RoxoPrincipalEscuro,
+    onPrimary = Preto,
+
+    secondary = RoxoSecundarioEscuro,
+    onSecondary = Preto,
+
+    tertiary = RoxoSecundarioEscuro,
+    onTertiary = Preto,
+
+    background = FundoEscuro,
+    onBackground = Branco,
+
+    surface = FundoEscuro,
+    onSurface = Branco,
+
+    surfaceVariant = LilasBotaoEscuro,
+    onSurfaceVariant = Branco,
+
+    primaryContainer = RoxoPrincipalEscuro,
+    onPrimaryContainer = Preto,
+
+    secondaryContainer = LilasBotaoEscuro,
+    onSecondaryContainer = Branco,
+
+    error = RoxoErro,
+    onError = Branco
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = RoxoPrincipal,
+    onPrimary = Branco,
+
+    secondary = RoxoSecundario,
+    onSecondary = Branco,
+
+    tertiary = RoxoSecundario,
+    onTertiary = Branco,
+
+    background = LilasFundo,
+    onBackground = Preto,
+
+    surface = LilasFundo,
+    onSurface = Preto,
+
+    surfaceVariant = LilasBotao,
+    onSurfaceVariant = Preto,
+
+    primaryContainer = RoxoPrincipal,
+    onPrimaryContainer = Branco,
+
+    secondaryContainer = LilasBotao,
+    onSecondaryContainer = Preto,
+
+    error = RoxoErro,
+    onError = Branco
+)
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -34,27 +83,38 @@ private val LightColorScheme = lightColorScheme(
     onBackground = Color(0xFF1C1B1F),
     onSurface = Color(0xFF1C1B1F),
     */
-)
 
 @Composable
 fun MinhaCalculadoraTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    temaDoAPP: TemaDoAPP,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val context = LocalContext.current
 
+// Define o esquema de cores de acordo com o tema selecionado
+    val esquemaDeCor = when (temaDoAPP) {
+
+        TemaDoAPP.CLARO -> LightColorScheme
+
+        TemaDoAPP.ESCURO -> DarkColorScheme
+
+        TemaDoAPP.DINAMICO -> {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (isSystemInDarkTheme()) {
+                    dynamicDarkColorScheme(context)
+                } else {
+                    dynamicLightColorScheme(context)
+                }
+                // Em versões anteriores ao Android 12, utiliza o tema claro
+            } else {
+                LightColorScheme
+            }
+        }
+    }
+    // Aplica o esquema de cores e a tipografia
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
+        colorScheme = esquemaDeCor,
+        typography = CalculadoraTypography,
         content = content
     )
 }

@@ -14,9 +14,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,10 +32,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.Thalia.unisal.minhacalculadora.ui.theme.MinhaCalculadoraTheme
+import com.example.Thalia.unisal.minhacalculadora.ui.theme.TemaDoAPP
 
 class MainActivity : ComponentActivity() {
 
@@ -53,10 +60,33 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MinhaCalculadoraTheme {
+            // Tema selecionado pelo usuário
+            var temaSelecionado by remember {
+                mutableStateOf(TemaDoAPP.CLARO)
+            }
+
+            MinhaCalculadoraTheme(temaSelecionado) {
+
                 Scaffold(
-                    modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    criaCalculadora(visor)
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = MaterialTheme.colorScheme.background
+                ) { innerPadding ->
+
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    ) {
+                        // Exibe o seletor para escolher entre os temas
+                        SeletorDeTemas(
+                            temaSelecionado = temaSelecionado,
+                            onTemaselecionado = {
+                                temaSelecionado = it
+                            }
+                        )
+
+                        criaCalculadora(visor)
+                    }
                 }
             }
         }
@@ -66,19 +96,27 @@ class MainActivity : ComponentActivity() {
     fun criaCalculadora(visor: String) {
 
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(24.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            Text(
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End,
-                fontSize = 32.sp,
-                text = visor
-            )
+            // Visor da calculadora
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Text(
+                    text = visor,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2
+                )
+            }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 criaBotaoPequeno("Sin", BotaoOperacao.SENO)
@@ -165,14 +203,48 @@ class MainActivity : ComponentActivity() {
                 }
             },
 
-            colors = if (identificador == BotaoOperacao.IGUALDADE) {
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                )
-            } else {
-                ButtonDefaults.buttonColors()
+            shape = RoundedCornerShape(50.dp),
+
+            colors = when {
+
+                // Botão de igualdade
+                identificador == BotaoOperacao.IGUALDADE -> {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
+
+                // Botão de limpar
+                identificador == BotaoOperacao.LIMPAR -> {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                }
+
+                // Botões de operações
+                identificador == BotaoOperacao.SOMA ||
+                        identificador == BotaoOperacao.SUBTRACAO ||
+                        identificador == BotaoOperacao.MULTIPLICACAO ||
+                        identificador == BotaoOperacao.DIVISAO ||
+                        identificador == BotaoOperacao.PERCENTUAL ||
+                        identificador == BotaoOperacao.POTENCIA -> {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary
+                    )
+                }
+
+                // Demais botões
+                else -> {
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             }
+
         ) {
             Text(texto)
         }
@@ -312,9 +384,11 @@ class MainActivity : ComponentActivity() {
         // Troca o sinal do número
         if (identificador == BotaoOperacao.MAIS_MENOS) {
 
-            val numero = numeroAtual.toFloat() * -1
-            numeroAtual = numero.toString().replace(".", ",")
-            visor = numeroAtual
+            if (numeroAtual.isNotEmpty()) {
+                val numero = numeroAtual.replace(",", ".").toFloat() * -1
+                numeroAtual = numero.toString().replace(".", ",")
+                visor = numeroAtual
+            }
 
             return
         }
@@ -588,6 +662,75 @@ class MainActivity : ComponentActivity() {
         MAIS_MENOS,
         APAGAR
     }
+    @Composable
+    fun SeletorDeTemas(temaSelecionado: TemaDoAPP,
+                       onTemaselecionado: (TemaDoAPP) -> Unit
+    ) {
+        // Controla se o menu de seleção de temas está aberto
+        var expandido by remember {
+            mutableStateOf(false)
+        }
+        // Organiza e posiciona o botão de seleção de temas
+        Box(
+            modifier = Modifier
+                .fillMaxWidth().padding(16.dp), contentAlignment = Alignment.CenterEnd
+        ) {
+            // Botão que abre o menu de opções
+            OutlinedButton(
+                onClick = {
+                    expandido = true
+                }
+            ) {
+                // Exibe o nome do tema atualmente selecionado
+                Text(
+                    text = when (temaSelecionado) {
+                        TemaDoAPP.CLARO -> "Claro"
+                        TemaDoAPP.ESCURO -> "Escuro"
+                        TemaDoAPP.DINAMICO -> "Dinâmico"
+                    }
+                )
+            }
+            // Menu suspenso com as opções de tema
+            DropdownMenu(
+                expanded = expandido,
+                onDismissRequest = {
+                    expandido = false
+                }
+            ) {
+                // Menu para selecionar tema claro
+                DropdownMenuItem(
+                    text = {
+                        Text("Claro")
+                    },
+                    onClick = {
+                        onTemaselecionado(TemaDoAPP.CLARO)
+                        expandido = false
+                    }
+                )
+                // Menu para selecionar tema escuro
+                DropdownMenuItem(
+                    text = {
+                        Text("Escuro")
+                    },
+                    onClick = {
+                        onTemaselecionado(TemaDoAPP.ESCURO)
+                        expandido = false
+                    }
+                )
+                // Menu para selecionar tema dinâmico
+                DropdownMenuItem(
+                    text = {
+                        Text("Dinâmico")
+                    },
+                    onClick = {
+                        onTemaselecionado(TemaDoAPP.DINAMICO)
+                        expandido = false
+                    }
+                )
+            }
+        }
+    }
+
 }
 
 
